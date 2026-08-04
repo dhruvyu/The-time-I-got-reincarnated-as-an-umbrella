@@ -358,18 +358,18 @@ body.reading #reader{display:block}
    Folder layout expected next to this index.html file:
 
      index.html
-     pages/
+     Pages/
        cover.jpg
-       ch01/  01.jpg  02.jpg  03.jpg  04.jpg  05.jpg  06.jpg
-       ch02/  01.jpg  02.jpg  ...
+       Ch01/  01.jpg  02.jpg ... 15.jpg
+       Ch02/  01.jpg  02.jpg  ...
 
-   TO ADD A PAGE   → drop 07.jpg into pages/ch01/ and change
-                     count: 6  →  count: 7
-   TO ADD A CHAPTER→ make pages/ch02/, then copy a chapter block
+   TO ADD A PAGE   → drop 16.jpg into Pages/Ch01/ and change
+                     count: 15  →  count: 16
+   TO ADD A CHAPTER→ make Pages/Ch02/, then copy a chapter block
                      below and change folder / title / count.
 
    Filenames must be zero-padded to 2 digits (01, 02 ... 10, 11).
-   If yours aren't, use  files:["pages/ch01/whatever.jpg", ...]
+   If yours aren't, use  files:["Pages/Ch01/whatever.jpg", ...]
    instead of folder/count.
    ══════════════════════════════════════════════════════════════ */
 const MANGA = {
@@ -379,19 +379,19 @@ const MANGA = {
   tagline:  "A new isekai saga: rain or shine, power reigns!",
   author:   "Dhruvyy",
   studio:   "Overpowered Parasol Studio",
-  cover:  "Pages/cover.jpg",
+  cover:    "Pages/cover.jpg",
   synopsis: "Bapamah dies the moment his dream finally comes true. He wakes with no eyes, no mouth and no way to move, under a sky full of stars somewhere in a Mauritian forest — and a boy named Krys picks him up.",
 
   chapters: [
     {
       title:  "Reborn as an Umbrella",
       folder: "Pages/Ch01/",
-      count:  6,
+      count:  15,
       ext:    "jpg"
     }
     /* ,{
       title:  "Chapter two title",
-      folder: "pages/ch02/",
+      folder: "Pages/Ch02/",
       count:  0,
       ext:    "jpg"
     } */
