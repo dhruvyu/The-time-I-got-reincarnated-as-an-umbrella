@@ -361,11 +361,11 @@ body.reading #reader{display:block}
      Pages/
        cover.jpg
        Ch01/  01.jpg  02.jpg ... 28.jpg
-       Ch02/  01.jpg  02.jpg  ...
+       Ch02/  01.jpg  02.jpg ... 11.jpg
 
    TO ADD A PAGE   → drop 29.jpg into Pages/Ch01/ and change
                      count: 28  →  count: 29
-   TO ADD A CHAPTER→ make Pages/Ch02/, then copy a chapter block
+   TO ADD A CHAPTER→ make Pages/Ch03/, then copy a chapter block
                      below and change folder / title / count.
 
    Filenames must be zero-padded to 2 digits (01, 02 ... 10, 11).
@@ -388,10 +388,16 @@ const MANGA = {
       folder: "Pages/Ch01/",
       count:  28,
       ext:    "jpg"
+    },
+    {
+      title:  "Chapter Two",          // <- change to your real chapter title
+      folder: "Pages/Ch02/",
+      count:  11,
+      ext:    "jpg"
     }
     /* ,{
-      title:  "Chapter two title",
-      folder: "Pages/Ch02/",
+      title:  "Chapter three title",
+      folder: "Pages/Ch03/",
       count:  0,
       ext:    "jpg"
     } */
