@@ -1,5 +1,5 @@
 /* Configure after deploying the Cloudflare Worker. Leave blank to show setup notice. */
-const FEEDBACK_API = "";
+const FEEDBACK_API = "https://umbrella-feedback.dhruvgooljar.workers.dev";
 window.chapterFeedback = {
   async mount(end, chapter) {
     const root = document.createElement('section');
