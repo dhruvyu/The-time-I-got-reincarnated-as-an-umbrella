@@ -55,12 +55,25 @@ window.chapterFeedback = {
           const actions=document.createElement('div');actions.className='feedback-actions';
           if(!c.parent_id){const reply=document.createElement('button');reply.type='button';reply.textContent='Reply';reply.onclick=()=>setReply(c.id,c.nickname);actions.appendChild(reply);}
           const report=document.createElement('button');report.type='button';report.textContent='Report';
+          const reportMessage=document.createElement('p');
+          reportMessage.className='feedback-report-message';
+          reportMessage.setAttribute('role','status');
+          reportMessage.setAttribute('aria-live','polite');
           report.onclick=async()=>{
             const reason=window.prompt('Report reason: spam, harassment, spoiler, or other');
             if(reason===null)return;
-            if(!['spam','harassment','spoiler','other'].includes(reason.trim().toLowerCase())){status.textContent='Choose spam, harassment, spoiler, or other.';return;}
-            try{const res=await fetch(url+'/reports',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({commentId:c.id,reason:reason.trim().toLowerCase()})});const data=await res.json();if(!res.ok)throw Error(data.error||'Could not report');status.textContent='Report received. Thank you.';}catch(e){status.textContent=e.message;}
-          };actions.appendChild(report);item.appendChild(actions);nodes.set(c.id,item);
+            const chosen=reason.trim().toLowerCase();
+            if(!['spam','harassment','spoiler','other'].includes(chosen)){reportMessage.textContent='Choose spam, harassment, spoiler, or other.';return;}
+            report.disabled=true;
+            reportMessage.textContent='Sending report…';
+            try{
+              const res=await fetch(url+'/reports',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({commentId:c.id,reason:chosen})});
+              const data=await res.json();
+              if(!res.ok)throw Error(data.error||'Could not report');
+              reportMessage.textContent='Report received. Thank you.';
+            }catch(e){reportMessage.textContent=e.message||'Could not send report.';}
+            finally{report.disabled=false;}
+          };actions.appendChild(report);item.append(actions,reportMessage);nodes.set(c.id,item);
         }
         for(const c of data.comments){const item=nodes.get(c.id);if(c.parent_id&&nodes.has(c.parent_id)){item.classList.add('feedback-reply');nodes.get(c.parent_id).appendChild(item);}else comments.appendChild(item);}
 
