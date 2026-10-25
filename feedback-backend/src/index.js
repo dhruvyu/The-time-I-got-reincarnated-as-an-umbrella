@@ -69,5 +69,5 @@ export default {async fetch(request,env){
       return reply({ok:true,pending:false},201);
     }
     return reply({error:'Not found'},404);
-  }catch(e){return reply({error:e instanceof SyntaxError?'Invalid JSON':'Request could not be processed'},400)}
+  }catch(e){console.error('Feedback request failed', {path, method:request.method, error:e instanceof Error?e.message:String(e)});return reply({error:e instanceof SyntaxError?'Invalid JSON':'Request could not be processed'},400)}
 }};
