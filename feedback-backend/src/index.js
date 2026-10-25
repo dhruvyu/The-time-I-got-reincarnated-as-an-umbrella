@@ -7,6 +7,18 @@ async function identity(request,env){
   return [...new Uint8Array(await crypto.subtle.sign('HMAC',key,bytes))].map(x=>x.toString(16).padStart(2,'0')).join('');
 }
 async function payload(request){if(Number(request.headers.get('content-length')||0)>4096)throw Error('Request too large');const raw=await request.text();if(raw.length>4096)throw Error('Request too large');return JSON.parse(raw)}
+// Server-side filtering ensures visitors cannot bypass censorship by editing the browser.
+const DEFAULT_BLOCKED = ['nigger','nigga','faggot','fag','kike','chink','spic','retard','tranny'];
+function censorSlurs(input, extra='') {
+  const terms=[...DEFAULT_BLOCKED,...extra.split(',').map(s=>s.trim().toLowerCase()).filter(Boolean)];
+  let result=input;
+  for(const term of terms) {
+    const escaped=term.replace(/[.*+?^${}()|[\]\\]/g,'\\export default {async fetch');
+    const pattern=new RegExp('(^|[^\\p{L}\\p{N}])('+escaped+')(?=$|[^\\p{L}\\p{N}])','giu');
+    result=result.replace(pattern,(_,before,word)=>before+'*'.repeat([...word].length));
+  }
+  return result;
+}
 export default {async fetch(request,env){
   const origin=request.headers.get('Origin');
   if(origin&&origin!==ORIGIN)return reply({error:'Origin not allowed'},403);
@@ -55,8 +67,8 @@ export default {async fetch(request,env){
       if(nickname.length<2||nickname.length>32||body.length<3||body.length>1000)return reply({error:'Nickname must be 2–32 characters and comment 3–1000 characters'},400);
       const recent=await env.DB.prepare("SELECT COUNT(*) AS count FROM comments WHERE visitor_hash=? AND created_at > datetime('now','-10 minutes')").bind(hash).first();
       if(recent.count>=2)return reply({error:'Please wait before commenting again'},429);
-      await env.DB.prepare('INSERT INTO comments(chapter,nickname,body,visitor_hash) VALUES(?,?,?,?)').bind(chapter,nickname,body,hash).run();
-      return reply({ok:true,pending:true},202);
+      await env.DB.prepare("INSERT INTO comments(chapter,nickname,body,visitor_hash,status) VALUES(?,?,?,?,'approved')").bind(chapter,censorSlurs(nickname,env.EXTRA_BLOCKED_WORDS||''),censorSlurs(body,env.EXTRA_BLOCKED_WORDS||''),hash).run();
+      return reply({ok:true,pending:false},201);
     }
     return reply({error:'Not found'},404);
   }catch(e){return reply({error:e instanceof SyntaxError?'Invalid JSON':'Request could not be processed'},400)}
