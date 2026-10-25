@@ -11,9 +11,9 @@ This is a **review-only feature** until you deploy the backend and configure its
 7. Set `FEEDBACK_API` in the root `feedback.js` to the deployed URL.
 8. Review and merge the pull request only when ready. GitHub Pages will serve the new files automatically.
 
-## Moderating comments
+## Slur filtering\n\nThe Worker replaces matches with asterisks before storing and publishing comments. To extend the built-in list, configure a comma-separated secret using `npx wrangler secret put EXTRA_BLOCKED_WORDS`. Filtering matches whole words and does not catch every obfuscation or language.\n\n## Moderating comments
 
-Comments are **pending by default**. Approve or reject using authenticated API requests (never put the admin token in browser code).
+Comments are **published automatically**, with server-side censorship of configured slurs. The admin API can still review pending legacy comments and change their status. Never put the admin token in browser code.
 
 ```bash
 curl -H "Authorization: Bearer YOUR_ADMIN_TOKEN" https://YOUR-WORKER.workers.dev/admin/comments
@@ -26,7 +26,7 @@ Use `"rejected"` to reject a comment. Only approved comments are returned public
 
 - Ratings are unique per chapter per hashed visitor IP, and can be changed after 60 seconds. Shared IPs may share a rating; anonymous ratings cannot guarantee one vote per person.
 - Visitor IPs are HMAC-hashed with a secret before storage; no raw IPs are written to D1.
-- Comments have a two-per-ten-minute per-IP limit, honeypot, size checks, and manual moderation. For higher traffic add Cloudflare Turnstile/WAF and stronger abuse controls.
+- Comments have a two-per-ten-minute per-IP limit, honeypot, size checks, and server-side slur censorship. No automatic filter catches every variation; consider optional human moderation for abuse. For higher traffic add Cloudflare Turnstile/WAF and stronger abuse controls.
 - CORS permits the production GitHub Pages origin; it is **not** authentication. Admin requests require a secret bearer token.
 - New chapters use their chapter number as a separate feedback key. Don't reorder existing chapters after publishing or feedback will attach to different chapters.
 - Before launching, publish a privacy notice covering pseudonymous abuse-prevention identifiers and comment retention.
