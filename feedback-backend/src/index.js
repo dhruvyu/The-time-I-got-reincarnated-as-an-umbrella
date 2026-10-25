@@ -3,7 +3,7 @@ function reply(data,status=200){return new Response(JSON.stringify(data),{status
 async function identity(request,env){
   const ip=request.headers.get('CF-Connecting-IP')||'unknown';
   const bytes=new TextEncoder().encode(ip);
-  const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(env.HASH_SECRET),'HMAC',{hash:'SHA-256'},false,['sign']);
+  const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(env.HASH_SECRET),{name:'HMAC',hash:'SHA-256'},false,['sign']);
   return [...new Uint8Array(await crypto.subtle.sign('HMAC',key,bytes))].map(x=>x.toString(16).padStart(2,'0')).join('');
 }
 async function payload(request){if(Number(request.headers.get('content-length')||0)>4096)throw Error('Request too large');const raw=await request.text();if(raw.length>4096)throw Error('Request too large');return JSON.parse(raw)}
