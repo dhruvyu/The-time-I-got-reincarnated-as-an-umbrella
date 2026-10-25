@@ -17,12 +17,6 @@ function censorSlurs(input, extra='') {
     return text.replace(pattern, (_, prefix, match) => prefix + '*'.repeat(match.length));
   }, input);
 }
-export default {async fetch');
-    const pattern=new RegExp('(^|[^\\p{L}\\p{N}])('+escaped+')(?=$|[^\\p{L}\\p{N}])','giu');
-    result=result.replace(pattern,(_,before,word)=>before+'*'.repeat([...word].length));
-  }
-  return result;
-}
 export default {async fetch(request,env){
   const origin=request.headers.get('Origin');
   if(origin&&origin!==ORIGIN)return reply({error:'Origin not allowed'},403);
