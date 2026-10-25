@@ -30,3 +30,6 @@ Use `"rejected"` to reject a comment. Only approved comments are returned public
 - CORS permits the production GitHub Pages origin; it is **not** authentication. Admin requests require a secret bearer token.
 - New chapters use their chapter number as a separate feedback key. Don't reorder existing chapters after publishing or feedback will attach to different chapters.
 - Before launching, publish a privacy notice covering pseudonymous abuse-prevention identifiers and comment retention.
+
+
+Deployment note: Cloudflare Git integration builds this branch using `npx wrangler deploy --config feedback-backend/wrangler.toml`.
