@@ -5,4 +5,4 @@ compatibility_date = "2026-10-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "umbrella-feedback"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "ade7ee07-a8b7-452b-b9b1-78ece72ac98c"
