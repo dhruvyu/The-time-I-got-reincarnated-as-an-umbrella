@@ -282,6 +282,7 @@ body.reading #reader{display:block}
   .ch__thumb{width:60px;height:80px}
 }
 </style>
+<link rel="stylesheet" href="feedback.css">
 </head>
 <body>
 
@@ -528,6 +529,7 @@ function openChapter(ci, startAt){
     (next && pageCount(next) ? '<button class="btn btn--go" id="nextCh">Next chapter</button>' : '') +
     '<button class="btn btn--ghost" id="homeBtn2">Back to chapters</button>';
   pagesEl.appendChild(end);
+  if(window.chapterFeedback) window.chapterFeedback.mount(end, ci + 1);
   const nb = end.querySelector('#nextCh'); if(nb) nb.onclick = ()=>openChapter(ci+1);
   end.querySelector('#homeBtn2').onclick = closeReader;
 
@@ -666,5 +668,6 @@ document.addEventListener('keydown',e=>{
   resize(); tick();
 })();
 </script>
+<script src="feedback.js" defer></script>
 </body>
 </html>
