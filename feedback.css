@@ -15,3 +15,13 @@
 .feedback-form button:disabled{opacity:.6}
 .feedback-status{min-height:1.3em;font-size:13px;color:var(--glint);margin:0}
 .feedback-trap{position:absolute!important;left:-9999px!important;width:1px!important;height:1px!important;opacity:0!important}
+
+.feedback-actions{display:flex;gap:14px;margin-top:9px}
+.feedback-actions button{font:inherit;font-size:12px;color:var(--gild);text-decoration:underline}
+.feedback-reply{margin:12px 0 0 16px;padding-left:12px;border-left:2px solid var(--gild);border-bottom:0}
+.feedback-comment details{margin-top:10px}
+.feedback-comment summary{cursor:pointer;color:var(--gild);font-size:13px}
+.feedback-spoiler{display:flex!important;align-items:center;gap:8px!important}
+.feedback-spoiler input{width:auto!important;accent-color:var(--gild)}
+.feedback-reply-target{cursor:pointer;color:var(--gild)!important}
+.feedback-reply-target[hidden]{display:none!important}
