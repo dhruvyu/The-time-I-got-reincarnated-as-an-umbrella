@@ -368,6 +368,9 @@ body.reading #reader{display:block}
    TO ADD A CHAPTER→ make Pages/Ch03/, then copy a chapter block
                      below and change folder / title / count.
 
+   A chapter can have  cover: "Pages/Ch02/cover.jpg"  — it becomes the
+   chapter's thumbnail and the opening page (not counted in page numbers).
+
    Filenames must be zero-padded to 2 digits (01, 02 ... 10, 11).
    If yours aren't, use  files:["Pages/Ch01/whatever.jpg", ...]
    instead of folder/count.
@@ -391,6 +394,7 @@ const MANGA = {
     },
     {
       title:  "Chapter Two",          // <- change to your real chapter title
+      cover:  "Pages/Ch02/cover.jpg", // optional: thumbnail + opening page of the chapter
       folder: "Pages/Ch02/",
       count:  11,
       ext:    "jpg"
@@ -460,7 +464,7 @@ MANGA.chapters.forEach((ch,ci)=>{
     '<span class="ch__arrow" aria-hidden="true">→</span>' +
     '<span class="ch__bar"><i></i></span>';
   const img = b.querySelector('img');
-  if(n){ img.onload = ()=>img.classList.add('ready'); img.src = pageSrc(ch,0); }
+  if(n){ img.onload = ()=>img.classList.add('ready'); img.src = ch.cover || pageSrc(ch,0); }
   const seen = +(store.get('read:'+ci) || 0);
   if(n) b.querySelector('.ch__bar i').style.width = Math.min(100, seen/n*100) + '%';
   b.onclick = ()=> n ? openChapter(ci) : null;
@@ -479,6 +483,19 @@ function openChapter(ci, startAt){
   $('#readTitle').textContent = 'Ch. ' + pad(ci+1) + ' · ' + ch.title;
   pagesEl.innerHTML = '';
   const n = pageCount(ch);
+
+  if(ch.cover){
+    const cv = document.createElement('div');
+    cv.className = 'page';           // no data-n: not counted in page numbers
+    const ci2 = new Image();
+    ci2.alt = 'Chapter ' + (ci+1) + ' cover';
+    ci2.decoding = 'async';
+    ci2.onload = ()=>ci2.classList.add('ready');
+    ci2.onerror = ()=>cv.remove();
+    ci2.src = ch.cover;
+    cv.appendChild(ci2);
+    pagesEl.appendChild(cv);
+  }
 
   for(let i=0;i<n;i++){
     const d = document.createElement('div');
@@ -550,7 +567,7 @@ function observe(){
   io = new IntersectionObserver(es=>{
     es.forEach(e=>{ if(e.isIntersecting) setCounter(+e.target.dataset.n, n); });
   },{root:reader, rootMargin:'-45% 0px -45% 0px'});
-  pagesEl.querySelectorAll('.page').forEach(p=>io.observe(p));
+  pagesEl.querySelectorAll('.page[data-n]').forEach(p=>io.observe(p));
 }
 
 function refreshBars(){
