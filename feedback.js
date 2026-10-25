@@ -39,7 +39,7 @@ window.chapterFeedback = {
         const data = await response.json();
         average.textContent = data.rating.count ? Number(data.rating.average).toFixed(1) + ' / 5 · ' + data.rating.count + ' ratings' : 'No ratings yet';
         comments.replaceChildren();
-        if(!data.comments.length) comments.textContent = 'No approved comments yet. Be the first!';
+        if(!data.comments.length) comments.textContent = 'No comments yet. Be the first!';
         for(const c of data.comments){
           const item=document.createElement('article');item.className='feedback-comment';
           const name=document.createElement('strong');name.textContent=c.nickname;
@@ -57,7 +57,7 @@ window.chapterFeedback = {
         const response=await fetch(url+'/comments',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nickname:fields.get('nickname'),body:fields.get('body'),website:fields.get('website')})});
         const data=await response.json();
         if(!response.ok) throw Error(data.error||'Unable to post comment');
-        form.reset();status.textContent='Comment submitted for moderation. Thank you!';
+        form.reset();status.textContent='Comment posted! Thank you!';
       } catch(err){status.textContent=err.message;} finally {button.disabled=false;}
     });
     await refresh();
