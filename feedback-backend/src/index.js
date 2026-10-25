@@ -10,10 +10,14 @@ async function payload(request){if(Number(request.headers.get('content-length')|
 // Server-side filtering ensures visitors cannot bypass censorship by editing the browser.
 const DEFAULT_BLOCKED = ['nigger','nigga','faggot','fag','kike','chink','spic','retard','tranny'];
 function censorSlurs(input, extra='') {
-  const terms=[...DEFAULT_BLOCKED,...extra.split(',').map(s=>s.trim().toLowerCase()).filter(Boolean)];
-  let result=input;
-  for(const term of terms) {
-    const escaped=term.replace(/[.*+?^${}()|[\]\\]/g,'\\export default {async fetch');
+  const terms = [...DEFAULT_BLOCKED, ...extra.split(',').map(s => s.trim().toLowerCase()).filter(Boolean)];
+  return terms.reduce((text, term) => {
+    if (!/^[a-z0-9]+$/.test(term)) return text;
+    const pattern = new RegExp('(^|[^a-z0-9])(' + term + ')(?=$|[^a-z0-9])', 'gi');
+    return text.replace(pattern, (_, prefix, match) => prefix + '*'.repeat(match.length));
+  }, input);
+}
+export default {async fetch');
     const pattern=new RegExp('(^|[^\\p{L}\\p{N}])('+escaped+')(?=$|[^\\p{L}\\p{N}])','giu');
     result=result.replace(pattern,(_,before,word)=>before+'*'.repeat([...word].length));
   }
