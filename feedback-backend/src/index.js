@@ -25,25 +25,42 @@ export default {async fetch(request,env){
   const path=new URL(request.url).pathname;
   const match=/^\/chapters\/(\d+)(?:\/(rating|comments|reports))?$/.exec(path);
   try{
-    if(path==='/admin/comments'){
+    if(path.startsWith('/admin/')){
       if(!env.ADMIN_TOKEN||request.headers.get('Authorization')!=='Bearer '+env.ADMIN_TOKEN)return reply({error:'Unauthorized'},401);
-      if(request.method==='GET'){
-        const data=await env.DB.prepare("SELECT id,chapter,nickname,body,status,created_at FROM comments WHERE status='pending' ORDER BY created_at DESC LIMIT 100").all();
-        return reply({comments:data.results});
+      if(path==='/admin/reports'){
+        if(request.method==='GET'){
+          const reports=await env.DB.prepare("SELECT r.id,r.comment_id,r.reason,r.created_at,c.chapter,c.nickname,c.body,c.status FROM comment_reports r JOIN comments c ON c.id=r.comment_id ORDER BY r.created_at DESC LIMIT 200").all();
+          return reply({reports:reports.results});
+        }
+        if(request.method==='POST'){
+          const data=await payload(request);
+          if(!Number.isSafeInteger(data.reportId)||data.reportId<1||!['dismiss','hide'].includes(data.action))return reply({error:'Invalid report action'},400);
+          const report=await env.DB.prepare('SELECT comment_id FROM comment_reports WHERE id=?').bind(data.reportId).first();
+          if(!report)return reply({error:'Report not found'},404);
+          if(data.action==='hide'){
+            await env.DB.prepare("UPDATE comments SET status='rejected' WHERE id=? OR id IN (SELECT comment_id FROM comment_details WHERE parent_id=?)").bind(report.comment_id,report.comment_id).run();
+            await env.DB.prepare('DELETE FROM comment_reports WHERE comment_id=?').bind(report.comment_id).run();
+          }else{
+            await env.DB.prepare('DELETE FROM comment_reports WHERE id=?').bind(data.reportId).run();
+          }
+          return reply({ok:true});
+        }
+        return reply({error:'Method not allowed'},405);
       }
-      if(request.method==='POST'){
-        const data=await payload(request);
-        if(!Number.isSafeInteger(data.id)||!['approved','rejected'].includes(data.status))return reply({error:'Invalid moderation request'},400);
-        const result=await env.DB.prepare('UPDATE comments SET status=? WHERE id=?').bind(data.status,data.id).run();
-        return reply({updated:result.meta.changes});
+      if(path==='/admin/comments'){
+        if(request.method==='GET'){
+          const data=await env.DB.prepare("SELECT id,chapter,nickname,body,status,created_at FROM comments WHERE status!='approved' ORDER BY created_at DESC LIMIT 100").all();
+          return reply({comments:data.results});
+        }
+        if(request.method==='POST'){
+          const data=await payload(request);
+          if(!Number.isSafeInteger(data.id)||data.id<1||!['approved','rejected'].includes(data.status))return reply({error:'Invalid moderation request'},400);
+          const result=await env.DB.prepare('UPDATE comments SET status=? WHERE id=?').bind(data.status,data.id).run();
+          return reply({updated:result.meta.changes});
+        }
+        return reply({error:'Method not allowed'},405);
       }
-      return reply({error:'Method not allowed'},405);
-    }
-    if(path==='/admin/reports'){
-      if(!env.ADMIN_TOKEN||request.headers.get('Authorization')!=='Bearer '+env.ADMIN_TOKEN)return reply({error:'Unauthorized'},401);
-      if(request.method!=='GET')return reply({error:'Method not allowed'},405);
-      const reports=await env.DB.prepare("SELECT r.comment_id,r.reason,r.created_at,c.chapter,c.nickname,c.body,c.status FROM comment_reports r JOIN comments c ON c.id=r.comment_id ORDER BY r.created_at DESC LIMIT 200").all();
-      return reply({reports:reports.results});
+      return reply({error:'Not found'},404);
     }
     if(!match)return reply({error:'Not found'},404);
     const chapter=Number(match[1]),action=match[2];
