@@ -176,6 +176,13 @@ body.reading #home{display:none}
 .ch__arrow{color:var(--glint);opacity:.6;font-size:20px;padding-right:6px}
 .ch__bar{grid-column:1/-1;height:2px;border-radius:2px;background:rgba(159,216,242,.12);overflow:hidden}
 .ch__bar i{display:block;height:100%;background:var(--gild);width:0;transition:width .5s ease}
+.ch__resume{grid-column:2/4;justify-self:start;padding:6px 13px;border:1px solid var(--gild);border-radius:99px;color:var(--gild);font-size:12px;font-weight:700;cursor:pointer}
+.ch__resume:hover{background:rgba(200,166,75,.13)}
+.reader-nav{display:flex;align-items:center;gap:6px;min-width:0}
+.reader-nav select{max-width:min(36vw,200px);min-width:0;background:var(--storm);color:var(--paper);border:1px solid var(--hair);border-radius:9px;padding:9px 5px;font:inherit;font-size:12px}
+.reader-nav button{padding:7px 10px;border:1px solid var(--hair);border-radius:9px;font-size:13px}
+.reader-nav button:disabled{opacity:.3;cursor:not-allowed}
+@media(max-width:520px){.topbar__t{display:none}.reader-nav select{max-width:31vw}.reader-nav button{padding:7px}}
 
 .about{max-width:760px;margin-top:clamp(48px,10vw,80px);border-top:1px solid var(--hair);padding-top:2rem}
 .about p{color:var(--paper-60);font-size:15px;max-width:60ch}
@@ -343,6 +350,11 @@ body.reading #reader{display:block}
       <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
     </button>
     <span class="topbar__t" id="readTitle"></span>
+    <nav class="reader-nav" aria-label="Chapter navigation">
+      <button id="prevChapter" aria-label="Previous chapter" title="Previous chapter">‹</button>
+      <select id="chapterSelect" aria-label="Choose chapter"></select>
+      <button id="nextChapter" aria-label="Next chapter" title="Next chapter">›</button>
+    </nav>
     <button class="icobtn" id="fitBtn" aria-label="Switch to fit-page view"><small id="fitLabel">FIT</small></button>
   </div>
   <div class="pages" id="pages"></div>
@@ -467,9 +479,20 @@ MANGA.chapters.forEach((ch,ci)=>{
   const img = b.querySelector('img');
   if(n){ img.onload = ()=>img.classList.add('ready'); img.src = ch.cover || pageSrc(ch,0); }
   const seen = +(store.get('read:'+ci) || 0);
+  const savedPosition=+(store.get('position:'+ci)||0);
   if(n) b.querySelector('.ch__bar i').style.width = Math.min(100, seen/n*100) + '%';
   b.onclick = ()=> n ? openChapter(ci) : null;
   b.disabled = !n;
+  if(n && (savedPosition > 1 || seen > 1)){
+    const resume=document.createElement('span');
+    resume.className='ch__resume';
+    resume.textContent='Resume · page '+Math.min(savedPosition||seen,n);
+    resume.setAttribute('role','button');
+    resume.setAttribute('tabindex','0');
+    resume.onclick=e=>{e.stopPropagation();openChapter(ci,Math.min(savedPosition||seen,n));};
+    resume.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();openChapter(ci,Math.min(seen,n));}};
+    b.appendChild(resume);
+  }
   chList.appendChild(b);
 });
 
@@ -477,10 +500,27 @@ MANGA.chapters.forEach((ch,ci)=>{
 const reader = $('#reader'), pagesEl = $('#pages'), botbar = $('#botbar');
 const topbar = $('#topbar'), stripFill = $('#stripFill');
 let current = -1, curPage = 1, io = null;
+const chapterSelect=$('#chapterSelect');
+MANGA.chapters.forEach((ch,i)=>{
+  const option=document.createElement('option');
+  option.value=String(i);
+  option.textContent='Ch. '+pad(i+1)+' · '+ch.title;
+  option.disabled=!pageCount(ch);
+  chapterSelect.appendChild(option);
+});
+chapterSelect.onchange=()=>openChapter(Number(chapterSelect.value));
+$('#prevChapter').onclick=()=>{if(current>0&&pageCount(MANGA.chapters[current-1]))openChapter(current-1)};
+$('#nextChapter').onclick=()=>{if(current+1<MANGA.chapters.length&&pageCount(MANGA.chapters[current+1]))openChapter(current+1)};
+function updateChapterNav(){
+  chapterSelect.value=String(current);
+  $('#prevChapter').disabled=current<=0||!pageCount(MANGA.chapters[current-1]);
+  $('#nextChapter').disabled=current>=MANGA.chapters.length-1||!pageCount(MANGA.chapters[current+1]);
+}
 
 function openChapter(ci, startAt){
   const ch = MANGA.chapters[ci];
   current = ci;
+  updateChapterNav();
   $('#readTitle').textContent = 'Ch. ' + pad(ci+1) + ' · ' + ch.title;
   pagesEl.innerHTML = '';
   const n = pageCount(ch);
@@ -559,6 +599,7 @@ function setCounter(p,n){
   botbar.innerHTML = '<b>' + pad(p) + '</b> / ' + pad(n);
   stripFill.style.width = (p/n*100) + '%';
   store.set('last', current + ':' + p);
+  store.set('position:'+current, p);
   const seen = +(store.get('read:'+current) || 0);
   if(p > seen) store.set('read:'+current, p);
 }
@@ -577,6 +618,20 @@ function refreshBars(){
     const n = pageCount(MANGA.chapters[ci]); if(!n) return;
     const seen = +(store.get('read:'+ci) || 0);
     b.querySelector('.ch__bar i').style.width = Math.min(100, seen/n*100) + '%';
+    let resume=b.querySelector('.ch__resume');
+    const position=+(store.get('position:'+ci)||0);
+    if(position>1){
+      if(!resume){
+        resume=document.createElement('span');
+        resume.className='ch__resume';
+        resume.setAttribute('role','button');
+        resume.setAttribute('tabindex','0');
+        resume.onclick=e=>{e.stopPropagation();openChapter(ci,Math.min(+(store.get('position:'+ci)||1),n))};
+        resume.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();resume.click()}};
+        b.appendChild(resume);
+      }
+      resume.textContent='Resume · page '+Math.min(position,n);
+    }
   });
   showContinue();
 }
