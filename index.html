@@ -487,7 +487,6 @@ MANGA.chapters.forEach((ch,ci)=>{
   const img = b.querySelector('img');
   if(n){ img.onload = ()=>img.classList.add('ready'); img.src = ch.cover || pageSrc(ch,0); }
   const savedPosition=+(store.get('position:'+ci)||0);
-  if(seen>=n && savedPosition<=1 && store.get('progress-fixed:'+ci)!=='yes'){store.set('read:'+ci,savedPosition);store.set('progress-fixed:'+ci,'yes');}
   // Repair stale 100% values produced by the previous unloaded-image observer.
   const storedSeen=+(store.get('read:'+ci)||0);
   if(storedSeen>=n && savedPosition<=1 && store.get('progress-repaired:'+ci)!=='1'){
@@ -505,7 +504,7 @@ MANGA.chapters.forEach((ch,ci)=>{
     resume.setAttribute('role','button');
     resume.setAttribute('tabindex','0');
     resume.onclick=e=>{e.stopPropagation();openChapter(ci,Math.min(savedPosition,n));};
-    resume.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();openChapter(ci,Math.min(seen,n));}};
+    resume.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();openChapter(ci,Math.min(savedPosition,n));}};
     b.appendChild(resume);
   }
   chList.appendChild(b);
@@ -651,7 +650,6 @@ function refreshBars(){
     b.querySelector('.ch__bar i').style.width = Math.min(100, seen/n*100) + '%';
     let resume=b.querySelector('.ch__resume');
     const position=+(store.get('position:'+ci)||0);
-    if(position<=1){if(resume)resume.remove();continue;}
     if(position<=1 && resume){resume.remove();resume=null;}
     if(position>1){
       if(!resume){
