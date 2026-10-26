@@ -602,14 +602,20 @@ function setCounter(p,n){
   store.set('position:'+current, p);
   const seen = +(store.get('read:'+current) || 0);
   if(p > seen) store.set('read:'+current, p);
+  const card=chList.children[current];
+  if(card){
+    const bar=card.querySelector('.ch__bar i');
+    if(bar) bar.style.width=Math.min(100,Math.max(p,seen)/n*100)+'%';
+  }
 }
 
 function observe(){
   if(io) io.disconnect();
   const n = pageCount(MANGA.chapters[current]);
   io = new IntersectionObserver(es=>{
-    es.forEach(e=>{ if(e.isIntersecting) setCounter(+e.target.dataset.n, n); });
-  },{root:reader, rootMargin:'-45% 0px -45% 0px'});
+    const visible=es.filter(e=>e.isIntersecting).sort((a,b)=>b.intersectionRatio-a.intersectionRatio);
+    if(visible.length) setCounter(+visible[0].target.dataset.n,n);
+  },{root:reader,threshold:[0,.1,.25,.5,.75]});
   pagesEl.querySelectorAll('.page[data-n]').forEach(p=>io.observe(p));
 }
 
