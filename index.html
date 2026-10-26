@@ -176,6 +176,7 @@ body.reading #home{display:none}
 .ch__arrow{color:var(--glint);opacity:.6;font-size:20px;padding-right:6px}
 .ch__bar{grid-column:1/-1;height:2px;border-radius:2px;background:rgba(159,216,242,.12);overflow:hidden}
 .ch__bar i{display:block;height:100%;background:var(--gild);width:0;transition:width .5s ease}
+.ch>span:nth-child(2){min-width:0;display:flex;flex-direction:column;align-items:flex-start}.ch__n,.ch__t,.ch__c{display:block}.ch__t{overflow-wrap:anywhere}
 .ch>span:nth-child(2){min-width:0;display:flex;flex-direction:column;align-items:flex-start}
 .ch__n,.ch__t,.ch__c{display:block}
 .ch__t{overflow-wrap:anywhere}
@@ -486,6 +487,7 @@ MANGA.chapters.forEach((ch,ci)=>{
   const img = b.querySelector('img');
   if(n){ img.onload = ()=>img.classList.add('ready'); img.src = ch.cover || pageSrc(ch,0); }
   const savedPosition=+(store.get('position:'+ci)||0);
+  if(seen>=n && savedPosition<=1 && store.get('progress-fixed:'+ci)!=='yes'){store.set('read:'+ci,savedPosition);store.set('progress-fixed:'+ci,'yes');}
   // Repair stale 100% values produced by the previous unloaded-image observer.
   const storedSeen=+(store.get('read:'+ci)||0);
   if(storedSeen>=n && savedPosition<=1 && store.get('progress-repaired:'+ci)!=='1'){
@@ -623,30 +625,22 @@ function setCounter(p,n){
 }
 
 function observe(){
-  if(io) io.disconnect();
-  // A page is considered read only when its actual position reaches the reader viewport.
-  // Image loading can briefly collapse page heights, so don't mark every visible placeholder read.
-  let frame=0;
+  if(io)io.disconnect();
+  if(reader._progressListener)reader.removeEventListener('scroll',reader._progressListener);
+  let scheduled=false;
   const update=()=>{
-    frame=0;
+    scheduled=false;
     if(current<0)return;
     const n=pageCount(MANGA.chapters[current]);
-    const pageNodes=[...pagesEl.querySelectorAll('.page[data-n]')];
     const center=reader.getBoundingClientRect().top+Math.min(reader.clientHeight*.38,320);
-    let chosen=null;
-    for(const node of pageNodes){
-      const rect=node.getBoundingClientRect();
-      if(rect.top<=center&&rect.bottom>=center){chosen=node;break;}
-    }
-    if(!chosen){
-      chosen=pageNodes.find(node=>node.getBoundingClientRect().bottom>center)||pageNodes[pageNodes.length-1];
-    }
-    if(chosen)setCounter(+chosen.dataset.n,n);
+    const nodes=[...pagesEl.querySelectorAll('.page[data-n]')];
+    const found=nodes.find(node=>{const r=node.getBoundingClientRect();return r.top<=center&&r.bottom>=center})||nodes.find(node=>node.getBoundingClientRect().bottom>center);
+    if(found)setCounter(+found.dataset.n,n);
   };
-  if(reader._progressListener)reader.removeEventListener('scroll',reader._progressListener);
-  reader._progressListener=()=>{if(!frame)frame=requestAnimationFrame(update)};
-  reader.addEventListener('scroll',reader._progressListener,{passive:true});
-  pagesEl.querySelectorAll('.page img').forEach(img=>img.addEventListener('load',()=>{if(!frame)frame=requestAnimationFrame(update)},{once:true}));
+  const schedule=()=>{if(!scheduled){scheduled=true;requestAnimationFrame(update)}};
+  reader._progressListener=schedule;
+  reader.addEventListener('scroll',schedule,{passive:true});
+  pagesEl.querySelectorAll('.page img').forEach(img=>img.addEventListener('load',schedule,{once:true}));
   requestAnimationFrame(update);
 }
 
@@ -658,6 +652,7 @@ function refreshBars(){
     let resume=b.querySelector('.ch__resume');
     const position=+(store.get('position:'+ci)||0);
     if(position<=1){if(resume)resume.remove();continue;}
+    if(position<=1 && resume){resume.remove();resume=null;}
     if(position>1){
       if(!resume){
         resume=document.createElement('span');
